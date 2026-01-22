@@ -1,0 +1,22 @@
+# Models (large files)
+models/
+*.bin
+
+# Audio files
+audio/
+*.wav
+*.mp3
+*.m4a
+*.flac
+*.ogg
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Docker
+.docker/

@@ -1,0 +1,43 @@
+services:
+  # Web UI with nginx
+  ui:
+    image: nginx:alpine
+    container_name: whisper-ui
+    ports:
+      - "3000:80"
+    volumes:
+      - ./ui/index.html:/usr/share/nginx/html/index.html:ro
+      - ./ui/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+    depends_on:
+      - whisper-server
+    restart: unless-stopped
+
+  # Whisper-cpp HTTP API server (built locally for ARM64)
+  whisper-server:
+    build: .
+    container_name: whisper-server
+    volumes:
+      - ./audio:/audio
+      - ./models:/models
+    command: >
+      ./whisper-server
+      --model /models/ggml-medium.bin
+      --language he
+      --host 0.0.0.0
+      --port 8080
+      --convert
+    restart: unless-stopped
+
+  # Interactive CLI container (optional)
+  whisper-cli:
+    build: .
+    container_name: whisper-cli
+    volumes:
+      - ./audio:/audio
+      - ./models:/models
+    working_dir: /app
+    stdin_open: true
+    tty: true
+    entrypoint: ["/bin/bash"]
+    profiles:
+      - cli

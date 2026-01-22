@@ -1,0 +1,13 @@
+services:
+  # Web UI with nginx - connects to native whisper server on host
+  ui:
+    image: nginx:alpine
+    container_name: whisper-ui
+    ports:
+      - "3000:80"
+    volumes:
+      - ./ui/index.html:/usr/share/nginx/html/index.html:ro
+      - ./ui/nginx.metal.conf:/etc/nginx/conf.d/default.conf:ro
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

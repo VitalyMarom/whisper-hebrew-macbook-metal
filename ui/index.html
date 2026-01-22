@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Whisper Hebrew Transcription</title>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+      background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+      min-height: 100vh;
+      color: #e0e0e0;
+      padding: 20px;
+    }
+
+    .container {
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 30px;
+      padding-top: 20px;
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      color: #fff;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #8892b0;
+      font-size: 1rem;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+      justify-content: center;
+    }
+
+    .tab {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #8892b0;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .tab:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .tab.active {
+      background: rgba(100, 255, 218, 0.1);
+      border-color: #64ffda;
+      color: #64ffda;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    .upload-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 30px;
+      margin-bottom: 20px;
+      border: 2px dashed rgba(255, 255, 255, 0.1);
+      transition: all 0.3s ease;
+    }
+
+    .upload-section:hover {
+      border-color: rgba(100, 255, 218, 0.3);
+    }
+
+    .upload-section.dragover {
+      border-color: #64ffda;
+      background: rgba(100, 255, 218, 0.05);
+    }
+
+    .upload-area {
+      text-align: center;
+      cursor: pointer;
+    }
+
+    .upload-icon {
+      font-size: 3rem;
+      margin-bottom: 15px;
+    }
+
+    .upload-text {
+      font-size: 1.1rem;
+      margin-bottom: 8px;
+    }
+
+    .upload-hint {
+      color: #8892b0;
+      font-size: 0.85rem;
+    }
+
+    #fileInput {
+      display: none;
+    }
+
+    .file-info {
+      display: none;
+      background: rgba(100, 255, 218, 0.1);
+      border-radius: 8px;
+      padding: 12px;
+      margin-top: 15px;
+      text-align: center;
+    }
+
+    .file-info.visible {
+      display: block;
+    }
+
+    .file-name {
+      color: #64ffda;
+      font-weight: 500;
+    }
+
+    .options {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      flex-wrap: wrap;
+      margin-top: 15px;
+    }
+
+    .option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .option label {
+      color: #8892b0;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+
+    select,
+    input[type="text"] {
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 8px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+
+    select:focus,
+    input[type="text"]:focus {
+      outline: none;
+      border-color: #64ffda;
+    }
+
+    .btn {
+      background: linear-gradient(135deg, #64ffda 0%, #48c9b0 100%);
+      color: #1a1a2e;
+      border: none;
+      padding: 12px 30px;
+      font-size: 1rem;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: block;
+      margin: 20px auto 0;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 30px rgba(100, 255, 218, 0.3);
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none;
+      box-shadow: none;
+    }
+
+    .btn-secondary {
+      background: rgba(255, 255, 255, 0.1);
+      color: #64ffda;
+      border: 1px solid rgba(100, 255, 218, 0.3);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(100, 255, 218, 0.1);
+      box-shadow: none;
+    }
+
+    .btn-small {
+      padding: 8px 16px;
+      font-size: 0.85rem;
+      margin: 0;
+      display: inline-block;
+    }
+
+    .btn-danger {
+      background: rgba(255, 107, 107, 0.2);
+      color: #ff6b6b;
+      border: 1px solid rgba(255, 107, 107, 0.3);
+    }
+
+    .btn-danger:hover {
+      background: rgba(255, 107, 107, 0.3);
+    }
+
+    .result-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+      display: none;
+    }
+
+    .result-section.visible {
+      display: block;
+    }
+
+    .result-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 15px;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+
+    .result-header h2 {
+      color: #fff;
+      font-size: 1.2rem;
+    }
+
+    .result-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .transcription {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      font-size: 1rem;
+      line-height: 1.7;
+      white-space: pre-wrap;
+      max-height: 300px;
+      overflow-y: auto;
+    }
+
+    .loading {
+      display: none;
+      text-align: center;
+      padding: 30px;
+    }
+
+    .loading.visible {
+      display: block;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid rgba(100, 255, 218, 0.2);
+      border-top-color: #64ffda;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 15px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .error {
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      color: #ff6b6b;
+      padding: 12px;
+      border-radius: 8px;
+      margin-top: 15px;
+      display: none;
+    }
+
+    .error.visible {
+      display: block;
+    }
+
+    .status {
+      color: #8892b0;
+      font-size: 0.9rem;
+    }
+
+    /* History Panel */
+    .history-list {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+    }
+
+    .history-item {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 12px;
+      padding: 15px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .history-item-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .history-item-title {
+      color: #64ffda;
+      font-weight: 500;
+    }
+
+    .history-item-date {
+      color: #8892b0;
+      font-size: 0.8rem;
+    }
+
+    .history-item-text {
+      color: #e0e0e0;
+      font-size: 0.9rem;
+      line-height: 1.6;
+      max-height: 100px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .history-item-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 40px;
+      color: #8892b0;
+    }
+
+    /* AI Chat Panel */
+    .ai-section {
+      background: rgba(255, 255, 255, 0.05);
+      border-radius: 16px;
+      padding: 20px;
+    }
+
+    .ai-context {
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 8px;
+      padding: 12px;
+      margin-bottom: 15px;
+      font-size: 0.85rem;
+      color: #8892b0;
+      max-height: 100px;
+      overflow-y: auto;
+    }
+
+    .ai-context-label {
+      color: #64ffda;
+      font-size: 0.75rem;
+      margin-bottom: 5px;
+      display: block;
+    }
+
+    .ai-input-area {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 15px;
+    }
+
+    .ai-input {
+      flex: 1;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+
+    .ai-input:focus {
+      outline: none;
+      border-color: #64ffda;
+    }
+
+    .ai-presets {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+
+    .preset-btn {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      color: #8892b0;
+      padding: 6px 12px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .preset-btn:hover {
+      background: rgba(100, 255, 218, 0.1);
+      border-color: rgba(100, 255, 218, 0.3);
+      color: #64ffda;
+    }
+
+    .ai-response {
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 8px;
+      padding: 15px;
+      min-height: 100px;
+      max-height: 300px;
+      overflow-y: auto;
+      white-space: pre-wrap;
+      line-height: 1.7;
+    }
+
+    .ai-status {
+      text-align: center;
+      padding: 20px;
+      color: #8892b0;
+    }
+
+    .ai-model-select {
+      margin-bottom: 15px;
+    }
+
+    @media (max-width: 600px) {
+      h1 {
+        font-size: 1.6rem;
+      }
+
+      .upload-section {
+        padding: 20px;
+      }
+
+      .options {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .ai-input-area {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="container">
+    <header>
+      <h1>🎙️ תמלול עברית</h1>
+      <p class="subtitle">תמלול אוטומטי עם Whisper + עיבוד AI</p>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" data-panel="transcribe">תמלול</button>
+      <button class="tab" data-panel="history">היסטוריה</button>
+      <button class="tab" data-panel="ai">עיבוד AI</button>
+    </div>
+
+    <!-- Transcribe Panel -->
+    <div class="panel active" id="transcribe">
+      <div class="upload-section" id="dropZone">
+        <div class="upload-area" onclick="document.getElementById('fileInput').click()">
+          <div class="upload-icon">📁</div>
+          <p class="upload-text">גררו קובץ לכאן או לחצו לבחירה</p>
+          <p class="upload-hint">תומך ב-WAV, MP3, M4A, FLAC, OGG</p>
+        </div>
+        <input type="file" id="fileInput" accept="audio/*,.wav,.mp3,.m4a,.flac,.ogg">
+
+        <div class="file-info" id="fileInfo">
+          <span>קובץ נבחר: </span>
+          <span class="file-name" id="fileName"></span>
+        </div>
+
+        <div class="options">
+          <div class="option">
+            <label for="language">שפה:</label>
+            <select id="language">
+              <option value="he" selected>עברית</option>
+              <option value="en">English</option>
+              <option value="ar">عربي</option>
+              <option value="auto">זיהוי אוטומטי</option>
+            </select>
+          </div>
+          <div class="option">
+            <label for="transcriptionName">שם:</label>
+            <input type="text" id="transcriptionName" placeholder="שם התמלול (אופציונלי)">
+          </div>
+        </div>
+
+        <button class="btn" id="transcribeBtn" disabled>תמלל</button>
+      </div>
+
+      <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <p class="status" id="statusText">מעבד את הקובץ...</p>
+      </div>
+
+      <div class="error" id="error"></div>
+
+      <div class="result-section" id="resultSection">
+        <div class="result-header">
+          <h2>תוצאת התמלול</h2>
+          <div class="result-actions">
+            <button class="btn btn-secondary btn-small" onclick="copyResult()">📋 העתק</button>
+            <button class="btn btn-secondary btn-small" onclick="sendToAI()">🤖 שלח ל-AI</button>
+            <button class="btn btn-secondary btn-small" onclick="saveToHistory()">💾 שמור</button>
+          </div>
+        </div>
+        <div class="transcription" id="transcription"></div>
+      </div>
+    </div>
+
+    <!-- History Panel -->
+    <div class="panel" id="history">
+      <div class="history-list" id="historyList">
+        <div class="empty-state" id="emptyHistory">
+          <p>אין תמלולים שמורים עדיין</p>
+        </div>
+      </div>
+      <button class="btn btn-danger btn-small" style="margin-top: 20px;" onclick="clearHistory()"
+        id="clearHistoryBtn">🗑️ מחק הכל</button>
+    </div>
+
+    <!-- AI Panel -->
+    <div class="panel" id="ai">
+      <div class="ai-section">
+        <div class="ai-model-select">
+          <label for="aiModel">מודל:</label>
+          <select id="aiModel">
+            <option value="ai/qwen2.5:7B-F16">Qwen 2.5 7B (מומלץ לעברית)</option>
+            <option value="ai/llama3.2:3B-Q8_0">Llama 3.2 3B</option>
+            <option value="ai/mistral:7B-Q4_K_M">Mistral 7B</option>
+            <option value="ai/gemma3:4B-F16">Gemma 3 4B</option>
+          </select>
+        </div>
+
+        <div class="ai-context" id="aiContext">
+          <span class="ai-context-label">טקסט נבחר:</span>
+          <span id="aiContextText">לא נבחר טקסט. תמללו קובץ או בחרו מההיסטוריה.</span>
+        </div>
+
+        <div class="ai-presets">
+          <button class="preset-btn" onclick="setPreset('summarize')">📝 סכם</button>
+          <button class="preset-btn" onclick="setPreset('bullets')">📋 נקודות עיקריות</button>
+          <button class="preset-btn" onclick="setPreset('action')">✅ משימות</button>
+          <button class="preset-btn" onclick="setPreset('translate')">🌐 תרגם לאנגלית</button>
+          <button class="preset-btn" onclick="setPreset('questions')">❓ שאלות ותשובות</button>
+        </div>
+
+        <div class="ai-input-area">
+          <input type="text" class="ai-input" id="aiPrompt" placeholder="שאל שאלה על התמלול...">
+          <button class="btn" id="aiSendBtn" onclick="sendAIRequest()">שלח</button>
+        </div>
+
+        <div class="loading" id="aiLoading">
+          <div class="spinner"></div>
+          <p class="status">מעבד עם AI...</p>
+        </div>
+
+        <div class="ai-response" id="aiResponse">
+          <div class="ai-status">התחל על ידי תמלול קובץ ושליחת שאלה</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // State
+    let selectedFile = null;
+    let currentTranscription = '';
+    let history = JSON.parse(localStorage.getItem('whisperHistory') || '[]');
+
+    // DOM elements
+    const dropZone = document.getElementById('dropZone');
+    const fileInput = document.getElementById('fileInput');
+    const fileInfo = document.getElementById('fileInfo');
+    const fileName = document.getElementById('fileName');
+    const transcribeBtn = document.getElementById('transcribeBtn');
+    const loading = document.getElementById('loading');
+    const statusText = document.getElementById('statusText');
+    const errorDiv = document.getElementById('error');
+    const resultSection = document.getElementById('resultSection');
+    const transcription = document.getElementById('transcription');
+
+    // Tabs
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.panel).classList.add('active');
+      });
+    });
+
+    // Drag and drop handlers
+    dropZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropZone.classList.add('dragover');
+    });
+
+    dropZone.addEventListener('dragleave', () => {
+      dropZone.classList.remove('dragover');
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropZone.classList.remove('dragover');
+      if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    fileInput.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      selectedFile = file;
+      fileName.textContent = file.name;
+      fileInfo.classList.add('visible');
+      transcribeBtn.disabled = false;
+      errorDiv.classList.remove('visible');
+      resultSection.classList.remove('visible');
+
+      // Set default name
+      const nameInput = document.getElementById('transcriptionName');
+      if (!nameInput.value) {
+        nameInput.value = file.name.replace(/\.[^/.]+$/, '');
+      }
+    }
+
+    transcribeBtn.addEventListener('click', async () => {
+      if (!selectedFile) return;
+
+      const language = document.getElementById('language').value;
+
+      loading.classList.add('visible');
+      transcribeBtn.disabled = true;
+      errorDiv.classList.remove('visible');
+      resultSection.classList.remove('visible');
+      statusText.textContent = 'מעלה את הקובץ...';
+
+      try {
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('language', language === 'auto' ? '' : language);
+        formData.append('response_format', 'text');
+
+        statusText.textContent = 'מתמלל... זה עלול לקחת מספר דקות';
+
+        const response = await fetch('/inference', {
+          method: 'POST',
+          body: formData
+        });
+
+        if (!response.ok) {
+          throw new Error(`שגיאת שרת: ${response.status}`);
+        }
+
+        const result = await response.text();
+        currentTranscription = result.trim();
+        transcription.textContent = currentTranscription;
+        resultSection.classList.add('visible');
+        updateAIContext(currentTranscription);
+
+      } catch (err) {
+        errorDiv.textContent = `שגיאה: ${err.message}`;
+        errorDiv.classList.add('visible');
+      } finally {
+        loading.classList.remove('visible');
+        transcribeBtn.disabled = false;
+      }
+    });
+
+    function copyResult() {
+      navigator.clipboard.writeText(transcription.textContent).then(() => {
+        showToast('הועתק!');
+      });
+    }
+
+    function saveToHistory() {
+      const name = document.getElementById('transcriptionName').value || 'תמלול ללא שם';
+      const item = {
+        id: Date.now(),
+        name: name,
+        text: currentTranscription,
+        date: new Date().toLocaleString('he-IL')
+      };
+      history.unshift(item);
+      localStorage.setItem('whisperHistory', JSON.stringify(history));
+      renderHistory();
+      showToast('נשמר!');
+    }
+
+    function renderHistory() {
+      const list = document.getElementById('historyList');
+      const emptyState = document.getElementById('emptyHistory');
+      const clearBtn = document.getElementById('clearHistoryBtn');
+
+      if (history.length === 0) {
+        emptyState.style.display = 'block';
+        clearBtn.style.display = 'none';
+        list.innerHTML = '';
+        list.appendChild(emptyState);
+        return;
+      }
+
+      emptyState.style.display = 'none';
+      clearBtn.style.display = 'inline-block';
+
+      list.innerHTML = history.map(item => `
+        <div class="history-item">
+          <div class="history-item-header">
+            <span class="history-item-title">${escapeHtml(item.name)}</span>
+            <span class="history-item-date">${item.date}</span>
+          </div>
+          <div class="history-item-text">${escapeHtml(item.text.substring(0, 200))}${item.text.length > 200 ? '...' : ''}</div>
+          <div class="history-item-actions">
+            <button class="btn btn-secondary btn-small" onclick="loadFromHistory(${item.id})">📖 פתח</button>
+            <button class="btn btn-secondary btn-small" onclick="sendHistoryToAI(${item.id})">🤖 AI</button>
+            <button class="btn btn-danger btn-small" onclick="deleteFromHistory(${item.id})">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function loadFromHistory(id) {
+      const item = history.find(h => h.id === id);
+      if (item) {
+        currentTranscription = item.text;
+        transcription.textContent = item.text;
+        resultSection.classList.add('visible');
+        document.getElementById('transcriptionName').value = item.name;
+        document.querySelector('[data-panel="transcribe"]').click();
+        updateAIContext(item.text);
+      }
+    }
+
+    function sendHistoryToAI(id) {
+      const item = history.find(h => h.id === id);
+      if (item) {
+        updateAIContext(item.text);
+        document.querySelector('[data-panel="ai"]').click();
+      }
+    }
+
+    function deleteFromHistory(id) {
+      history = history.filter(h => h.id !== id);
+      localStorage.setItem('whisperHistory', JSON.stringify(history));
+      renderHistory();
+    }
+
+    function clearHistory() {
+      if (confirm('האם למחוק את כל ההיסטוריה?')) {
+        history = [];
+        localStorage.setItem('whisperHistory', JSON.stringify(history));
+        renderHistory();
+      }
+    }
+
+    // AI Functions
+    function updateAIContext(text) {
+      document.getElementById('aiContextText').textContent = text.substring(0, 500) + (text.length > 500 ? '...' : '');
+      document.getElementById('aiContext').dataset.fullText = text;
+    }
+
+    function sendToAI() {
+      updateAIContext(currentTranscription);
+      document.querySelector('[data-panel="ai"]').click();
+    }
+
+    function setPreset(type) {
+      const prompts = {
+        summarize: 'סכם את הטקסט הבא בקצרה:',
+        bullets: 'הוצא את הנקודות העיקריות מהטקסט הבא כרשימה:',
+        action: 'הוצא משימות ופעולות נדרשות מהטקסט הבא:',
+        translate: 'Translate the following Hebrew text to English:',
+        questions: 'צור 3 שאלות ותשובות על הטקסט הבא:'
+      };
+      document.getElementById('aiPrompt').value = prompts[type];
+    }
+
+    async function sendAIRequest() {
+      const prompt = document.getElementById('aiPrompt').value;
+      const contextText = document.getElementById('aiContext').dataset.fullText || '';
+      const model = document.getElementById('aiModel').value;
+
+      if (!prompt) {
+        alert('נא להזין שאלה או בקשה');
+        return;
+      }
+
+      if (!contextText) {
+        alert('נא לתמלל קובץ או לבחור מההיסטוריה תחילה');
+        return;
+      }
+
+      const aiLoading = document.getElementById('aiLoading');
+      const aiResponse = document.getElementById('aiResponse');
+
+      aiLoading.classList.add('visible');
+      aiResponse.innerHTML = '';
+
+      try {
+        const fullPrompt = `${prompt}\n\n---\n${contextText}`;
+
+        const response = await fetch('/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({
+            model: model,
+            messages: [
+              { role: 'user', content: fullPrompt }
+            ],
+            max_tokens: 2000,
+            temperature: 0.7
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`שגיאת AI: ${response.status}`);
+        }
+
+        const data = await response.json();
+        const aiText = data.choices?.[0]?.message?.content || 'לא התקבלה תשובה';
+        aiResponse.textContent = aiText;
+
+      } catch (err) {
+        aiResponse.innerHTML = `<span style="color: #ff6b6b;">שגיאה: ${err.message}</span>`;
+      } finally {
+        aiLoading.classList.remove('visible');
+      }
+    }
+
+    // Enter key for AI input
+    document.getElementById('aiPrompt').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        sendAIRequest();
+      }
+    });
+
+    // Utility functions
+    function escapeHtml(text) {
+      const div = document.createElement('div');
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    function showToast(message) {
+      // Simple toast notification
+      const toast = document.createElement('div');
+      toast.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#64ffda;color:#1a1a2e;padding:10px 20px;border-radius:8px;z-index:1000;';
+      toast.textContent = message;
+      document.body.appendChild(toast);
+      setTimeout(() => toast.remove(), 2000);
+    }
+
+    // Initialize
+    renderHistory();
+  </script>
+</body>
+
+</html>
