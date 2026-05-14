@@ -506,6 +506,16 @@
           <span class="file-name" id="fileName"></span>
         </div>
 
+        <!-- URL Input for YouTube/Spotify -->
+        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+          <p style="color: #8892b0; margin-bottom: 10px; font-size: 0.9rem;">או הזינו URL מ-YouTube או Spotify:</p>
+          <div style="display: flex; gap: 10px; margin-bottom: 15px;">
+            <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." style="flex: 1;">
+            <button class="btn" id="urlBtn" onclick="handleUrlInput()" style="margin: 0;">טען</button>
+          </div>
+          <div class="error" id="urlError"></div>
+        </div>
+
         <div class="options">
           <div class="option">
             <label for="language">שפה:</label>
@@ -666,6 +676,64 @@
       }
     }
 
+    async function handleUrlInput() {
+      const url = document.getElementById('urlInput').value.trim();
+      const urlError = document.getElementById('urlError');
+
+      if (!url) {
+        urlError.textContent = 'אנא הזן URL';
+        urlError.classList.add('visible');
+        return;
+      }
+
+      urlError.classList.remove('visible');
+      const urlBtn = document.getElementById('urlBtn');
+      urlBtn.disabled = true;
+      urlBtn.textContent = 'עיבוד...';
+
+      try {
+        // Validate URL format
+        const urlObj = new URL(url);
+        const hostname = urlObj.hostname.toLowerCase();
+
+        if (!hostname.includes('youtube.com') && !hostname.includes('youtu.be') && !hostname.includes('spotify.com')) {
+          throw new Error('רק YouTube ו-Spotify נתמכים');
+        }
+
+        // Request audio extraction from backend
+        const response = await fetch('/extract-audio', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          },
+          body: JSON.stringify({ url: url })
+        });
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}));
+          throw new Error(errorData.error || `שגיאת שרת: ${response.status}`);
+        }
+
+        const data = await response.json();
+        
+        // Create a blob from the audio data
+        const audioBlob = new Blob([data.audio], { type: 'audio/mp3' });
+        const audioFile = new File([audioBlob], data.title || 'audio_from_url.mp3', { type: 'audio/mp3' });
+
+        handleFile(audioFile);
+        document.getElementById('transcriptionName').value = data.title || 'תמלול מ-URL';
+        document.getElementById('urlInput').value = '';
+
+        showToast('✅ הוקד בהצלחה!');
+      } catch (err) {
+        urlError.textContent = `❌ שגיאה: ${err.message}`;
+        urlError.classList.add('visible');
+      } finally {
+        urlBtn.disabled = false;
+        urlBtn.textContent = 'טען';
+      }
+    }
+
     transcribeBtn.addEventListener('click', async () => {
       if (!selectedFile) return;
 
@@ -797,7 +865,11 @@
 
     // AI Functions
     function updateAIContext(text) {
-      document.getElementById('aiContextText').textContent = text.substring(0, 500) + (text.length > 500 ? '...' : '');
+      // Show full text in context, not truncated
+      const contextElement = document.getElementById('aiContextText');
+      contextElement.textContent = text;
+      contextElement.style.maxHeight = '150px';
+      contextElement.style.overflowY = 'auto';
       document.getElementById('aiContext').dataset.fullText = text;
     }
 
@@ -857,15 +929,24 @@
         });
 
         if (!response.ok) {
-          throw new Error(`שגיאת AI: ${response.status}`);
+          if (response.status === 404 || response.status === 503) {
+            throw new Error(`מודל AI אינו זמין: ${model}. וודא ש-Docker מריץ וההודעה נשלפה (docker model pull ${model})`);
+          }
+          throw new Error(`שגיאת AI: ${response.status} - ${response.statusText}`);
         }
 
         const data = await response.json();
-        const aiText = data.choices?.[0]?.message?.content || 'לא התקבלה תשובה';
+        
+        if (!data.choices || !data.choices[0] || !data.choices[0].message) {
+          throw new Error('תשובה לא חוקית מ-AI');
+        }
+        
+        const aiText = data.choices[0].message.content;
         aiResponse.textContent = aiText;
 
       } catch (err) {
-        aiResponse.innerHTML = `<span style="color: #ff6b6b;">שגיאה: ${err.message}</span>`;
+        const errorMessage = err.message || 'שגיאה לא ידועה';
+        aiResponse.innerHTML = `<span style="color: #ff6b6b;">❌ שגיאה: ${errorMessage}</span>`;
       } finally {
         aiLoading.classList.remove('visible');
       }
