@@ -716,8 +716,15 @@
 
         const data = await response.json();
         
-        // Create a blob from the audio data
-        const audioBlob = new Blob([data.audio], { type: 'audio/mp3' });
+        // Decode base64 audio data to binary
+        const binaryString = atob(data.audio);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        // Create a blob from the binary data
+        const audioBlob = new Blob([bytes], { type: 'audio/mp3' });
         const audioFile = new File([audioBlob], data.title || 'audio_from_url.mp3', { type: 'audio/mp3' });
 
         handleFile(audioFile);

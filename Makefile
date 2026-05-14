@@ -22,11 +22,13 @@ help:
 	@echo "Available models: tiny, base, small, medium, large-v1, large-v2, large-v3, large-v3-turbo"
 	@echo "Recommended for Hebrew: medium or large-v3"
 
-# Install dependencies via Homebrew
+# Install dependencies via Homebrew and pip
 install-deps:
 	@echo "Installing dependencies..."
 	@which brew > /dev/null || (echo "Homebrew not found. Please install from https://brew.sh"; exit 1)
-	brew install whisper-cpp ffmpeg
+	brew install whisper-cpp ffmpeg yt-dlp
+	@which python3 > /dev/null || (echo "Python3 not found. Please install from https://www.python.org"; exit 1)
+	pip3 install flask flask-cors
 	@echo "Dependencies installed!"
 
 # Download Whisper model
