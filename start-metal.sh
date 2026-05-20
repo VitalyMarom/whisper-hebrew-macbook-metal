@@ -37,6 +37,13 @@ if lsof -i :$WHISPER_PORT > /dev/null 2>&1; then
     sleep 2
 fi
 
+# Check if audio service port is already in use
+if lsof -i :5001 > /dev/null 2>&1; then
+    echo "Port 5001 already in use. Stopping existing audio service..."
+    pkill -f "audio-extraction-service.py" 2>/dev/null
+    sleep 2
+fi
+
 # Stop any existing docker services that might conflict
 docker compose down 2>/dev/null
 docker compose -f docker-compose.metal.yml down 2>/dev/null
@@ -71,7 +78,8 @@ fi
 # Start audio extraction service (optional, for YouTube/Spotify support)
 if command -v python3 &> /dev/null; then
     echo "Starting audio extraction service..."
-    python3 audio-extraction-service.py &
+    export NVIDIA_API_KEY="${NVIDIA_API_KEY:-}"
+    AUDIO_EXTRACTION_PORT=5001 python3 audio-extraction-service.py &
     AUDIO_SVC_PID=$!
     sleep 2
     echo "Audio extraction service started (PID: $AUDIO_SVC_PID)"
@@ -79,9 +87,23 @@ else
     echo "Warning: Python3 not found. YouTube/Spotify audio extraction will not be available."
 fi
 
+# Start Ollama (deprecated - now using NVIDIA API)
+# Ollama is no longer required for AI features
+
 # Start the UI container
 echo "Starting web UI..."
 docker compose -f docker-compose.metal.yml up -d
+
+# Wait for services to be ready
+echo "Verifying services..."
+sleep 3
+
+# Check whisper server
+if curl -s http://127.0.0.1:$WHISPER_PORT/health > /dev/null 2>&1; then
+    echo "✓ Whisper server is running"
+else
+    echo "⚠ Whisper server not responding yet (may still be initializing)"
+fi
 
 echo ""
 echo "=========================================="
@@ -90,6 +112,7 @@ echo "=========================================="
 echo ""
 echo "  Web UI: http://localhost:3000"
 echo "  API:    http://localhost:$WHISPER_PORT"
+echo "  Ollama: http://localhost:11434"
 echo ""
 echo "  To stop: ./stop-metal.sh"
 echo "  Or press Ctrl+C"

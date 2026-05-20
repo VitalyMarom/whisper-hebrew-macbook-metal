@@ -11,12 +11,13 @@ RUN apt-get update && apt-get install -y \
 WORKDIR /app
 
 # Clone whisper.cpp
-RUN git clone https://github.com/ggerganov/whisper.cpp.git .
+RUN git clone --depth 1 https://github.com/ggerganov/whisper.cpp.git .
 
 # Build with disabled FP16 vector arithmetic (not supported in Docker VM)
 RUN cmake -B build \
     -DGGML_CPU_ARM_ARCH=armv8-a \
     -DGGML_NATIVE=OFF \
+    -DCMAKE_BUILD_TYPE=Release \
     && cmake --build build --config Release -j$(nproc)
 
 # Copy binaries to /app root

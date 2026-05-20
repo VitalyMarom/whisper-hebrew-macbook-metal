@@ -10,6 +10,9 @@ audio/
 *.flac
 *.ogg
 
+# Data
+data/
+
 # macOS
 .DS_Store
 

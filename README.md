@@ -31,13 +31,14 @@ make start
 
 ```bash
 # 1. Install dependencies
-brew install whisper-cpp ffmpeg
+brew install whisper-cpp ffmpeg yt-dlp
 
 # 2. Download model
 ./download-model.sh medium
 
-# 3. Pull an LLM model for AI features
-docker model pull ai/qwen2.5:7B-F16
+# 3. (Optional) Pull an LLM for AI features
+brew install ollama
+ollama pull qwen2.5-coder:7b
 
 # 4. Start
 ./start-metal.sh
@@ -85,6 +86,13 @@ Or with scripts:
 docker compose up -d --build
 ```
 
+### Custom Model (Docker)
+
+To use a different Whisper model with Docker:
+```bash
+MODEL_NAME=ggml-large-v3.bin make docker-start
+```
+
 ---
 
 ## Audio Sources
@@ -109,19 +117,33 @@ The app supports multiple audio input methods:
 
 ## AI Processing
 
-The AI tab lets you process transcriptions with local LLMs via Docker Model Runner.
+The AI tab lets you process transcriptions with NVIDIA API models.
 
-### Setup Docker Model
+### Setup NVIDIA API Key
 
+Get your API key from [build.nvidia.com](https://build.nvidia.com)
+
+**Option 1: Via UI (Recommended)**
+1. Go to the AI tab
+2. Enter your NVIDIA API key in the input field
+3. The key is saved to the backend server
+
+**Option 2: Via Environment Variable**
 ```bash
-# Pull a model (Qwen 2.5 recommended for Hebrew)
-docker model pull ai/qwen2.5:7B-F16
-
-# Or other options:
-docker model pull ai/llama3.2:3B-Q8_0
-docker model pull ai/mistral:7B-Q4_K_M
-docker model pull ai/gemma3:4B-F16
+export NVIDIA_API_KEY="your-api-key-here"
+make start
 ```
+
+### Available Models
+
+| Model | Hebrew Quality |
+|-------|----------------|
+| ai21labs/AI21-Jamba-Mini-1.6 | ⭐⭐⭐⭐⭐ Highly Recommended |
+| mistralai/mistral-nemotron | ⭐⭐⭐⭐ Very Good |
+| meta/llama-3.1-405b-instruct | ⭐⭐⭐⭐ Very Good |
+| qwen/qwen3-coder-480b-a35b-instruct | ⭐⭐⭐⭐ Very Good |
+
+**Recommendation**: Use **AI21 Jamba Mini 1.6** for best native Hebrew understanding and performance.
 
 ### AI Features
 
@@ -162,11 +184,12 @@ Using script: `./download-model.sh <model>`
 
 ### LLM Models (for AI)
 
-| Model | Size | Hebrew |
-|-------|------|--------|
-| ai/qwen2.5:7B-F16 | ~15 GB | Best |
-| ai/llama3.2:3B-Q8_0 | ~3 GB | Good |
-| ai/mistral:7B-Q4_K_M | ~4 GB | Good |
+| Model | Provider | Hebrew |
+|-------|----------|--------|
+| AI21 Jamba Mini 1.6 | NVIDIA | Best (Native) |
+| mistral-nemotron | NVIDIA | Very Good |
+| llama-3.1-405b | NVIDIA | Very Good |
+| qwen3-coder-480b | NVIDIA | Very Good |
 
 ---
 
@@ -174,9 +197,11 @@ Using script: `./download-model.sh <model>`
 
 ```bash
 make help              # Show all available commands
-make install-deps     # Install dependencies (whisper-cpp, ffmpeg)
+make install-deps     # Install dependencies (whisper-cpp, ffmpeg, yt-dlp)
 make download-model   # Download Whisper model (default: medium)
 make download-model MODEL=large-v3  # Download specific model
+make pull-llm         # Pull LLM model for AI (default: ai/qwen2.5:7B-F16)
+make pull-llm MODEL=ai/llama3.2:3B-Q8_0  # Pull specific LLM
 make start             # Start with Metal GPU
 make stop              # Stop all services
 make docker-start      # Start with Docker CPU
@@ -243,9 +268,8 @@ make download-model
 ```
 
 **"AI not working" / "LLM is not available"**:
-```bash
-docker model pull ai/qwen2.5:7B-F16
-```
+1. Check your NVIDIA API key is set (UI or environment variable)
+2. Verify the key is valid at [build.nvidia.com](https://build.nvidia.com)
 
 **"Port in use"**:
 ```bash
